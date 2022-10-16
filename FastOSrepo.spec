@@ -28,6 +28,9 @@ mkdir -p %{buildroot}/etc/pki/rpm-gpg/
 cp yumrepo/FastOS.repo %{buildroot}/etc/yum.repos.d/
 cp yumrepo/RPM-GPG-KEY-FastOS %{buildroot}/etc/pki/rpm-gpg/
 
+(export os_major_version=$(cat /etc/system-release | awk '{print $4}' | awk -F '.' '{print $1}');
+sed -i "s/\\\$releasever/$os_major_version/g" %{buildroot}/etc/yum.repos.d/FastOS.repo)
+
 %post
 
 %preun

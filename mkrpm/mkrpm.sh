@@ -37,6 +37,12 @@ else
   elif [ -f $1/$module_name.spec.in ]; then
     mv_spec=1
     spec_path=$(ls $(pwd)/$1/$module_name.spec.in)
+  elif [ -f $1/$package-$module_name.spec ]; then
+    mv_spec=0
+    spec_path=$(ls $(pwd)/$1/$package-$module_name.spec)
+  elif [ -f $1/$package-$module_name.spec.in ]; then
+    mv_spec=1
+    spec_path=$(ls $(pwd)/$1/$package-$module_name.spec.in)
   else
     echo "spec file for moudle $module_name not exist"
     exit 2
@@ -84,17 +90,22 @@ if [ -f make.sh ]; then
    ./make.sh clean >/dev/null 2>&1
 fi
 
-git checkout master
-if [ $? -ne 0 ]; then
-  git checkout main
-  if [ $? -ne 0 ]; then
-    exit
-  fi
-fi
 
-git pull
+if [ "$package" = 'libfuse' ]; then
+  git checkout fuse-3.10.5
+else
+  git checkout master
+  if [ $? -ne 0 ]; then
+    git checkout main
+    if [ $? -ne 0 ]; then
+      exit $?
+    fi
+  fi
+
+  git pull
+fi
 if [ $? -ne 0 ]; then
-   exit
+   exit $?
 fi
 
 commit_version=$(git log | head -n 1 | awk '{print $2;}')
@@ -113,12 +124,7 @@ cd $work_path && rm -rf $pack-$ver $pack-$ver.tar.gz
 
 releasever="el$os_major_version"
 arch=$(uname -r | awk -F '.' '{print $NF;}')
-
-if [ "$releasever" = 'el7' ]; then
-  dist="$releasever.centos.$arch"
-else
-  dist="$releasever.$arch"
-fi
+dist="$releasever.$arch"
 
 rpmdir=~/rpmbuild/RPMS/$arch/
 if [ ! -d $rpmdir ]; then
@@ -127,10 +133,16 @@ fi
 
 passwd=$(cat /etc/mkrpm/passwd)
 files=''
-
+pkg_names=''
+dev_names=''
 for rpm in `cat $spec_path | grep '%define' | grep -v Version | awk '{print $3}'` `cat $spec_path | grep Name: | grep -v '\}' | awk -F: '{print $2}'`
 do
 
+if [[ "$rpm" =~ '-devel' ]]; then
+  dev_names="$dev_names $rpm"
+fi
+
+pkg_names="$pkg_names $rpm"
 version=$ver-$release
 fdebug=$rpm-debuginfo-$version.$dist.rpm
 if [ -f $rpmdir/$fdebug ]; then
@@ -168,6 +180,17 @@ if [ $overwrite -eq 1 ] || [ -z "$stableexist" ]; then
   else
     scp $files root@39.106.8.170:$REPO_PATH/ && ssh root@39.106.8.170 touch $REPO_PATH/.createrepo.flag
   fi
+
+  if [ $? -ne 0 ]; then
+    exit $?
+  fi
+
+  if [ ! -z $dev_names ]; then
+    pkg_names="$dev_names"
+  fi
+  echo ''
+  echo 'waiting for rpm repo ready ...'
+  sleep 60 && sudo yum clean all && sudo yum install $pkg_names -y
 else
   echo "Error: Please increace your version first"
 fi

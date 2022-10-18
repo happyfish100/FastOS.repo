@@ -10,6 +10,7 @@ Group: System Environment/Base
 URL:  http://github.com/happyfish100/FastOSrepo/
 Source: http://github.com/happyfish100/FastOSrepo/%{name}-%{version}.tar.gz
 
+BuildArch: noarch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n) 
 Requires: %__cp %__mv %__chmod %__grep %__mkdir %__install %__id
 

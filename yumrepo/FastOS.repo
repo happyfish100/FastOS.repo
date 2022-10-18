@@ -1,7 +1,7 @@
 
 [FastOS]
-name=FastOS RPM repository for Enterprise Linux $releasever - x86_64
-baseurl=http://www.fastken.com/yumrepo/el$releasever/x86_64/
+name=FastOS RPM repository for Enterprise Linux $releasever - $basearch
+baseurl=http://www.fastken.com/yumrepo/el$releasever/$basearch/
 metadata_expire=3600
 gpgcheck=1
 enabled=1

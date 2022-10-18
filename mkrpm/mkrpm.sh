@@ -111,16 +111,16 @@ sed -i "s/\\\$COMMIT_VERSION/$commit_version/" $pack-$ver/$pack.spec
 tar -czf $pack-$ver.tar.gz $pack-$ver && rpmbuild -ta $pack-$ver.tar.gz || exit 1
 cd $work_path && rm -rf $pack-$ver $pack-$ver.tar.gz
 
-arch="el$os_major_version"
-hardware=$(uname -r | awk -F '.' '{print $NF;}')
+releasever="el$os_major_version"
+arch=$(uname -r | awk -F '.' '{print $NF;}')
 
-if [ "$arch" = 'el7' ]; then
-  dist="$arch.centos.$hardware"
+if [ "$releasever" = 'el7' ]; then
+  dist="$releasever.centos.$arch"
 else
-  dist="$arch.$hardware"
+  dist="$releasever.$arch"
 fi
 
-rpmdir=~/rpmbuild/RPMS/x86_64/
+rpmdir=~/rpmbuild/RPMS/$arch/
 if [ ! -d $rpmdir ]; then
   mkdir -p $rpmdir
 fi
@@ -159,10 +159,10 @@ done
 
 cd $rpmdir
 filewithversion=$rpm-$version.$dist
-stableexist=$(yum list $filewithversion 2>/dev/null | fgrep $rpm | fgrep $version.$arch)
+stableexist=$(yum list $filewithversion 2>/dev/null | fgrep $rpm | fgrep $version.$releasever)
 if [ $overwrite -eq 1 ] || [ -z "$stableexist" ]; then
   IP=$(ifconfig -a | grep -w inet | grep -v 127.0.0.1 | awk '{print $2}')
-  REPO_PATH="/usr/html/yumrepo/$arch/x86_64"
+  REPO_PATH="/usr/html/yumrepo/$releasever/$arch"
   if [ "$IP" = '172.17.7.215' ]; then
     cp $files $REPO_PATH/ && touch $REPO_PATH/.createrepo.flag
   else

@@ -49,21 +49,22 @@ else
   fi
 fi
 
-if [ $? -ne 0 ]; then
-   exit
+ret=$?
+if [ $ret -ne 0 ]; then
+   exit $ret
 fi
 
 uname=$(uname)
 if [ $uname != 'Linux' ]; then
   echo "Only support Linux"
-  exit
+  exit 1
 fi
 
 osname=$(cat /etc/os-release | grep -w NAME | awk -F '=' '{print $2;}' | \
         awk -F '"' '{if (NF==3) {print $2} else {print $1}}' | awk '{print $1}')
 if [ $osname != 'CentOS' ]; then
   echo "Only support CentOS"
-  exit
+  exit 1
 fi
 os_major_version=$(cat /etc/system-release | awk '{print $4}' | awk -F '.' '{print $1}')
 
@@ -97,15 +98,17 @@ else
   git checkout master
   if [ $? -ne 0 ]; then
     git checkout main
-    if [ $? -ne 0 ]; then
-      exit $?
+    ret=$?
+    if [ $ret -ne 0 ]; then
+      exit $ret
     fi
   fi
 
   git pull
 fi
-if [ $? -ne 0 ]; then
-   exit $?
+ret=$?
+if [ $ret -ne 0 ]; then
+   exit $ret
 fi
 
 commit_version=$(git log | head -n 1 | awk '{print $2;}')
@@ -181,8 +184,9 @@ if [ $overwrite -eq 1 ] || [ -z "$stableexist" ]; then
     scp $files root@39.106.8.170:$REPO_PATH/ && ssh root@39.106.8.170 touch $REPO_PATH/.createrepo.flag
   fi
 
-  if [ $? -ne 0 ]; then
-    exit $?
+  ret=$?
+  if [ $ret -ne 0 ]; then
+    exit $ret
   fi
 
   if [ ! -z $dev_names ]; then
@@ -193,4 +197,5 @@ if [ $overwrite -eq 1 ] || [ -z "$stableexist" ]; then
   sleep 60 && sudo yum clean all && sudo yum install $pkg_names -y
 else
   echo "Error: Please increace your version first"
+  exit 1
 fi

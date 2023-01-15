@@ -2,7 +2,7 @@
 %define CommitVersion %(echo $COMMIT_VERSION)
 
 Name: FastOSrepo
-Version: 1.0.0
+Version: 1.0.1
 Release: 1%{?dist}
 Summary: FastOS repo for yum
 License: LGPL

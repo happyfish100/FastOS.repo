@@ -60,13 +60,13 @@ if [ $uname != 'Linux' ]; then
   exit 1
 fi
 
-osname=$(cat /etc/os-release | grep -w NAME | awk -F '=' '{print $2;}' | \
-        awk -F '"' '{if (NF==3) {print $2} else {print $1}}' | awk '{print $1}')
-if [ $osname != 'CentOS' ]; then
-  echo "Only support CentOS"
+os_major_version=$(fgrep '%rhel' /etc/rpm/macros.dist | awk '{print $2;}')
+if [ "$os_major_version" != '7' ] && [ "$os_major_version" != '8' ]; then
+  osname=$(cat /etc/os-release | grep -w NAME | awk -F '=' '{print $2;}' | \
+      awk -F '"' '{if (NF==3) {print $2} else {print $1}}' | awk '{print $1}')
+  echo "unsupport Linux release: $osname"
   exit 1
 fi
-os_major_version=$(cat /etc/system-release | awk '{print $4}' | awk -F '.' '{print $1}')
 
 shell_path=$(dirname $0)
 

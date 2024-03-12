@@ -8,24 +8,24 @@ module_name=''
 repo_affix=''
 overwrite=0
 if [ -n "$2" ]; then
-  if [ "$2" == "--force" ]; then
-    overwrite=1
-  else
-    module_name=$2
-    if [ "${module_name%${module_name#$REPO_AFFIX_TAG}}" == "$REPO_AFFIX_TAG" ]; then
-      repo_affix=${module_name#$REPO_AFFIX_TAG}
-      module_name=''
-    fi
-
-    if [ -n "$3" ]; then
-      param3=$3
-      if [ "$param3" == "--force" ]; then
-        overwrite=1
-      elif [ "${param3%${param3#$REPO_AFFIX_TAG}}" == "$REPO_AFFIX_TAG" ]; then
-        repo_affix=${param3#$REPO_AFFIX_TAG}
+    if [ "$2" == "--force" ]; then
+      overwrite=1
+    else
+      module_name=$2
+      if [ "${module_name%${module_name#$REPO_AFFIX_TAG}}" == "$REPO_AFFIX_TAG" ]; then
+        repo_affix=${module_name#$REPO_AFFIX_TAG}
+        module_name=''
       fi
     fi
-  fi
+
+    params="$3 $4"
+    for param in $params; do
+        if [ "$param" == "--force" ]; then
+          overwrite=1
+        elif [ "${param%${param#$REPO_AFFIX_TAG}}" == "$REPO_AFFIX_TAG" ]; then
+          repo_affix=${param#$REPO_AFFIX_TAG}
+        fi
+    done
 fi
 
 module_path=$1

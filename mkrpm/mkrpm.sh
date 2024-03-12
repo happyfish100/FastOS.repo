@@ -1,48 +1,67 @@
 #!/bin/bash
 
+REPO_AFFIX_TAG='--repo'
 [ "x$1" == 'x' ] && echo "$0 <package-path> [module]" && exit 1
 
 package=$(echo ${1%/} | awk -F / '{print $NF}')
 module_name=''
+repo_affix=''
 overwrite=0
 if [ -n "$2" ]; then
   if [ "$2" == "--force" ]; then
     overwrite=1
   else
     module_name=$2
-    if [ -n "$3" ] && [ "$3" == "--force" ]; then
-      overwrite=1
+    if [ "${module_name%${module_name#$REPO_AFFIX_TAG}}" == "$REPO_AFFIX_TAG" ]; then
+      repo_affix=${module_name#$REPO_AFFIX_TAG}
+      module_name=''
+    fi
+
+    if [ -n "$3" ]; then
+      param3=$3
+      if [ "$param3" == "--force" ]; then
+        overwrite=1
+      elif [ "${param3%${param3#$REPO_AFFIX_TAG}}" == "$REPO_AFFIX_TAG" ]; then
+        repo_affix=${param3#$REPO_AFFIX_TAG}
+      fi
     fi
   fi
 fi
 
+module_path=$1
+if [ -n "$repo_affix" ]; then
+  if [ -d "$module_path$repo_affix" ]; then
+     module_path="$module_path$repo_affix"
+  fi
+fi
+
 if [ -z $module_name ]; then
-  if [ -f $1/$package.spec ]; then
+  if [ -f $module_path/$package.spec ]; then
     mv_spec=0
-    spec_path=$(ls $(pwd)/$1/$package.spec)
-  elif [ -f $1/$package.spec.in ]; then
+    spec_path=$(ls $(pwd)/$module_path/$package.spec)
+  elif [ -f $module_path/$package.spec.in ]; then
     mv_spec=1
-    spec_path=$(ls $(pwd)/$1/$package.spec.in)
-  elif [ -f $1/*.spec ]; then
+    spec_path=$(ls $(pwd)/$module_path/$package.spec.in)
+  elif [ -f $module_path/*.spec ]; then
     mv_spec=0
-    spec_path=$(ls $(pwd)/$1/*.spec)
-  elif [ -f $1/*.spec.in ]; then
+    spec_path=$(ls $(pwd)/$module_path/*.spec)
+  elif [ -f $module_path/*.spec.in ]; then
     mv_spec=1
-    spec_path=$(ls $(pwd)/$1/*.spec.in)
+    spec_path=$(ls $(pwd)/$module_path/*.spec.in)
   fi
 else
-  if [ -f $1/$module_name.spec ]; then
+  if [ -f $module_path/$module_name.spec ]; then
     mv_spec=0
-    spec_path=$(ls $(pwd)/$1/$module_name.spec)
-  elif [ -f $1/$module_name.spec.in ]; then
+    spec_path=$(ls $(pwd)/$module_path/$module_name.spec)
+  elif [ -f $module_path/$module_name.spec.in ]; then
     mv_spec=1
-    spec_path=$(ls $(pwd)/$1/$module_name.spec.in)
-  elif [ -f $1/$package-$module_name.spec ]; then
+    spec_path=$(ls $(pwd)/$module_path/$module_name.spec.in)
+  elif [ -f $module_path/$package-$module_name.spec ]; then
     mv_spec=0
-    spec_path=$(ls $(pwd)/$1/$package-$module_name.spec)
-  elif [ -f $1/$package-$module_name.spec.in ]; then
+    spec_path=$(ls $(pwd)/$module_path/$package-$module_name.spec)
+  elif [ -f $module_path/$package-$module_name.spec.in ]; then
     mv_spec=1
-    spec_path=$(ls $(pwd)/$1/$package-$module_name.spec.in)
+    spec_path=$(ls $(pwd)/$module_path/$package-$module_name.spec.in)
   else
     echo "spec file for moudle $module_name not exist"
     exit 2
@@ -177,7 +196,7 @@ filewithversion=$rpm-$version.$dist
 stableexist=$(yum list $filewithversion 2>/dev/null | fgrep $rpm | fgrep $version.$releasever)
 if [ $overwrite -eq 1 ] || [ -z "$stableexist" ]; then
   IP=$(ifconfig -a | grep -w inet | grep -v 127.0.0.1 | awk '{print $2}')
-  REPO_PATH="/usr/html/yumrepo/$releasever/$arch"
+  REPO_PATH="/usr/html/yumrepo$repo_affix/$releasever/$arch"
   if [ "$IP" = '172.17.7.215' ]; then
     cp $files $REPO_PATH/ && touch $REPO_PATH/.createrepo.flag
   else
